@@ -14,7 +14,7 @@ We deal with 3 scenarii : normal limit order, aggressive limit order & normal ma
 Play section by section the script (to open up figures which contain a lot of graphs).
 
 It contains a power point to help you present this complex topic.
-Beware you might want to hide some of the slides !!
+
 
 
 
