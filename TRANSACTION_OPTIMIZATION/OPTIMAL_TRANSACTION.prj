@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration target="target.mlapps" target-name="Package App" name="OPTIMAL_TRANSACTION" location="C:\My_Demos\PORTFOLIO\TRANSACTION_OPTIMIZATION" file="C:\My_Demos\PORTFOLIO\TRANSACTION_OPTIMIZATION\OPTIMAL_TRANSACTION.prj" build-checksum="3025386970">
+    <param.appname>OPTIMAL_TRANSACTION</param.appname>
+    <param.authnamewatermark>S.Duprey</param.authnamewatermark>
+    <param.email />
+    <param.company />
+    <param.icon>${PROJECT_ROOT}\OPTIMAL_TRANSACTION_24.png</param.icon>
+    <param.summary>Financial Engineer</param.summary>
+    <param.description>Computing liquidation strategy efficient frontier</param.description>
+    <param.screenshot>C:\Users\Public\Pictures\APPS_PICTURE\optimal_transaction.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name>
+      <item>Curve Fitting Toolbox</item>
+      <item>Optimization Toolbox</item>
+      <item>Statistics Toolbox</item>
+      <item>MATLAB</item>
+    </param.products.name>
+    <param.products.id>
+      <item>60</item>
+      <item>6</item>
+      <item>19</item>
+      <item>1</item>
+    </param.products.id>
+    <param.products.version>
+      <item>3.3.1</item>
+      <item>6.3</item>
+      <item>8.2</item>
+      <item>8.1</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}\OPTIMAL_TRANSACTION.mlappinstall</param.output>
+    <param.guid>39791d64-4011-479a-9699-7d5105902b66</param.guid>
+    <unset>
+      <param.email />
+      <param.company />
+      <param.version />
+      <param.platforms />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\great_demo_gui.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\constrained_variance.m</file>
+      <file>${PROJECT_ROOT}\expected_shortfall.m</file>
+      <file>${PROJECT_ROOT}\great_demo_gui.fig</file>
+      <file>${PROJECT_ROOT}\linear_permanent_impact.m</file>
+      <file>${PROJECT_ROOT}\shortfall_variance.m</file>
+      <file>${PROJECT_ROOT}\simple_temporary_impact.m</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file name="OPTIMAL_TRANSACTION.mlappinstall" location="C:\My_Demos\PORTFOLIO\TRANSACTION_OPTIMIZATION" optional="false">C:\My_Demos\PORTFOLIO\TRANSACTION_OPTIMIZATION\OPTIMAL_TRANSACTION.mlappinstall</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\MATLAB\R2013a</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.1</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
+

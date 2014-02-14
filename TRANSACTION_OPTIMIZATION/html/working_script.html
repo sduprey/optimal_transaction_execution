@@ -1,0 +1,576 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Portfolio transaction optimal trading</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-07-18"><meta name="DC.source" content="working_script.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Portfolio transaction optimal trading</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Parameters</a></li><li><a href="#2">Market impact modeling from high frequency data</a></li><li><a href="#3">Minimal expected shortfall : minimizing the litigation risk</a></li><li><a href="#4">Expected shortfall when we sell steadily over time</a></li><li><a href="#5">Minimum trading variance : minimizing the volatility risk</a></li><li><a href="#6">Expected shortfall when we sell everything at once</a></li><li><a href="#7">Building the efficient frontier</a></li><li><a href="#8">Plotting the 3D efficient surface</a></li></ul></div><h2>Parameters<a name="1"></a></h2><p>maturity in days</p><pre class="codeinput">T=5;
+<span class="comment">% number of time periods</span>
+N=5;
+<span class="comment">% time period length</span>
+tau=T./N;
+<span class="comment">% daily volume 5 million shares $/share</span>
+gamma=2.5*10^(-7);
+<span class="comment">% impact at 1 percent of market ($/share)/(share/day)</span>
+eta=2.5*10^(-6);
+<span class="comment">% bid ask spread $/share</span>
+epsilon=0.0625;
+<span class="comment">% volatility of 30% annual</span>
+sigma=0.95;
+<span class="comment">% initial holding</span>
+X0=1000000;
+</pre><h2>Market impact modeling from high frequency data<a name="2"></a></h2><pre class="codeinput">permanent_impact=@(x)linear_permanent_impact(gamma,x);
+temporary_impact=@(x)simple_temporary_impact(epsilon,eta,tau,x);
+</pre><h2>Minimal expected shortfall : minimizing the litigation risk<a name="3"></a></h2><pre class="codeinput">obj =@(x) expected_shortfall(tau,permanent_impact,temporary_impact,x);
+nonlincon=@(x) shortfall_variance(sigma, tau, x);
+Aeq = [zeros(1,N+1);zeros(1,N+1)];
+Aeq(1,1)=1;
+Aeq(2,end)=1;
+beq(1)=X0;
+beq(2)=0;
+x0 = zeros(N+1,1);
+x0(1)=X0;
+lb  = zeros(1,N+1);
+ub = X0*ones(1, N+1);
+x=fmincon(obj,x0,[],[],Aeq,beq,lb,ub);
+<span class="comment">% Minimal expected shortfall</span>
+<span class="comment">% constant trading over period</span>
+</pre><pre class="codeoutput">Warning: The default trust-region-reflective algorithm does not solve problems
+with the constraints you have specified. FMINCON will use the active-set
+algorithm instead. For information on applicable algorithms, see Choosing the
+Algorithm in the documentation. 
+Warning: Your current settings will run a different algorithm (interior-point)
+in a future release. 
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+Active inequalities (to within options.TolCon = 1e-06):
+  lower      upper     ineqlin   ineqnonlin
+    6          1                      
+</pre><h2>Expected shortfall when we sell steadily over time<a name="4"></a></h2><p>associated variance</p><pre class="codeinput">x
+max_trading_variance=shortfall_variance(sigma,tau,x)
+min_exp_sh=expected_shortfall(tau,permanent_impact,temporary_impact,x)
+</pre><pre class="codeoutput">
+x =
+
+   1.0e+06 *
+
+    1.0000
+    0.8000
+    0.6000
+    0.4000
+    0.2000
+         0
+
+
+max_trading_variance =
+
+   1.0830e+12
+
+
+min_exp_sh =
+
+   6.6250e+05
+
+</pre><h2>Minimum trading variance : minimizing the volatility risk<a name="5"></a></h2><pre class="codeinput">obj =@(x) shortfall_variance(sigma, tau, x);
+Aeq = [zeros(1,N+1);zeros(1,N+1)];
+Aeq(1,1)=1;
+Aeq(2,end)=1;
+beq(1)=X0;
+beq(2)=0;
+x0 = zeros(N+1,1);
+x0(1)=X0;
+lb  = zeros(1,N+1);
+ub = X0*ones(1, N+1);
+options = optimset(<span class="string">'Algorithm'</span>,<span class="string">'interior-point'</span>);
+[x,fval,exitflag]=fmincon(obj,x0,[],[],Aeq,beq,lb,ub);
+<span class="comment">% Minimal expected shortfall</span>
+<span class="comment">% trading everything at once</span>
+</pre><pre class="codeoutput">Warning: The default trust-region-reflective algorithm does not solve problems
+with the constraints you have specified. FMINCON will use the active-set
+algorithm instead. For information on applicable algorithms, see Choosing the
+Algorithm in the documentation. 
+Warning: Your current settings will run a different algorithm (interior-point)
+in a future release. 
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+Active inequalities (to within options.TolCon = 1e-06):
+  lower      upper     ineqlin   ineqnonlin
+    2          1                      
+    3                                 
+    4                                 
+    5                                 
+    6                                 
+</pre><h2>Expected shortfall when we sell everything at once<a name="6"></a></h2><pre class="codeinput">x
+min_trading_variance=shortfall_variance(sigma, tau, x)
+max_exp_sh=expected_shortfall(tau,permanent_impact,temporary_impact,x)
+</pre><pre class="codeoutput">
+x =
+
+     1000000
+           0
+           0
+           0
+           0
+           0
+
+
+min_trading_variance =
+
+     0
+
+
+max_exp_sh =
+
+     2562500
+
+</pre><h2>Building the efficient frontier<a name="7"></a></h2><pre class="codeinput">numStrategies = 30;
+targetedVarArray = linspace(min_trading_variance,max_trading_variance,numStrategies);
+liquidation_strategies = zeros(N+1,numStrategies); <span class="comment">% preallocating memory</span>
+<span class="keyword">for</span> i=1:numStrategies
+    targeted_variance=targetedVarArray(i);
+    obj =@(x) expected_shortfall(tau,permanent_impact,temporary_impact,x);
+    nonlincon=@(x) constrained_variance(sigma,tau,targeted_variance,x);
+    Aeq = [zeros(1,N+1);zeros(1,N+1)];
+    Aeq(1,1)=1;
+    Aeq(2,end)=1;
+    beq(1)=X0;
+    beq(2)=0;
+    x0 = zeros(N+1,1);
+    x0(1)=X0;
+    options = optimset(<span class="string">'Algorithm'</span>,<span class="string">'interior-point'</span>);
+    [x,fval,exitflag]=fmincon(obj,x0,[],[],Aeq,beq,[],[],nonlincon,options);
+    <span class="comment">% Minimal expected shortfall</span>
+    <span class="comment">% constant trading over period</span>
+    liquidation_strategies(:,i)=x;
+<span class="keyword">end</span>
+hold <span class="string">on</span>;
+plot(0:N,liquidation_strategies);
+title(<span class="string">'Efficient Frontier'</span>);
+</pre><pre class="codeoutput">
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance and constraints are 
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance and constraints are 
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance and constraints are 
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Solver stopped prematurely.
+
+fmincon stopped because it exceeded the function evaluation limit,
+options.MaxFunEvals = 3000 (the default value).
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance and constraints are 
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance and constraints are 
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+</pre><img vspace="5" hspace="5" src="working_script_01.png" alt=""> <h2>Plotting the 3D efficient surface<a name="8"></a></h2><pre class="codeinput">surf(repmat((0:N)',1,numStrategies),repmat(targetedVarArray,N+1,1),liquidation_strategies)
+title(<span class="string">'Liquidation strategy''s Efficient Frontier'</span>);
+xlabel(<span class="string">'Trading periods'</span>,<span class="string">'fontweight'</span>,<span class="string">'b'</span>);
+ylabel(<span class="string">'Volatility risk'</span>,<span class="string">'fontweight'</span>,<span class="string">'b'</span>);
+zlabel(<span class="string">'Stock amount'</span>,<span class="string">'fontweight'</span>,<span class="string">'b'</span>);
+</pre><img vspace="5" hspace="5" src="working_script_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Portfolio transaction optimal trading
+
+%% Parameters
+% maturity in days
+T=5;
+% number of time periods
+N=5;
+% time period length
+tau=T./N;
+% daily volume 5 million shares $/share
+gamma=2.5*10^(-7);
+% impact at 1 percent of market ($/share)/(share/day)
+eta=2.5*10^(-6);
+% bid ask spread $/share
+epsilon=0.0625;
+% volatility of 30% annual
+sigma=0.95;
+% initial holding
+X0=1000000;
+
+%% Market impact modeling from high frequency data
+permanent_impact=@(x)linear_permanent_impact(gamma,x);
+temporary_impact=@(x)simple_temporary_impact(epsilon,eta,tau,x);
+
+%% Minimal expected shortfall : minimizing the litigation risk
+obj =@(x) expected_shortfall(tau,permanent_impact,temporary_impact,x);
+nonlincon=@(x) shortfall_variance(sigma, tau, x);
+Aeq = [zeros(1,N+1);zeros(1,N+1)];
+Aeq(1,1)=1;
+Aeq(2,end)=1;
+beq(1)=X0;
+beq(2)=0;
+x0 = zeros(N+1,1);
+x0(1)=X0;
+lb  = zeros(1,N+1);
+ub = X0*ones(1, N+1);
+x=fmincon(obj,x0,[],[],Aeq,beq,lb,ub);
+% Minimal expected shortfall
+% constant trading over period
+
+%% Expected shortfall when we sell steadily over time
+% associated variance
+x
+max_trading_variance=shortfall_variance(sigma,tau,x)
+min_exp_sh=expected_shortfall(tau,permanent_impact,temporary_impact,x)
+
+%% Minimum trading variance : minimizing the volatility risk
+obj =@(x) shortfall_variance(sigma, tau, x);
+Aeq = [zeros(1,N+1);zeros(1,N+1)];
+Aeq(1,1)=1;
+Aeq(2,end)=1;
+beq(1)=X0;
+beq(2)=0;
+x0 = zeros(N+1,1);
+x0(1)=X0;
+lb  = zeros(1,N+1);
+ub = X0*ones(1, N+1);
+options = optimset('Algorithm','interior-point');
+[x,fval,exitflag]=fmincon(obj,x0,[],[],Aeq,beq,lb,ub);
+% Minimal expected shortfall
+% trading everything at once
+
+%% Expected shortfall when we sell everything at once
+x
+min_trading_variance=shortfall_variance(sigma, tau, x)
+max_exp_sh=expected_shortfall(tau,permanent_impact,temporary_impact,x)
+
+%% Building the efficient frontier
+numStrategies = 30;
+targetedVarArray = linspace(min_trading_variance,max_trading_variance,numStrategies);
+liquidation_strategies = zeros(N+1,numStrategies); % preallocating memory
+for i=1:numStrategies
+    targeted_variance=targetedVarArray(i);
+    obj =@(x) expected_shortfall(tau,permanent_impact,temporary_impact,x);
+    nonlincon=@(x) constrained_variance(sigma,tau,targeted_variance,x);
+    Aeq = [zeros(1,N+1);zeros(1,N+1)];
+    Aeq(1,1)=1;
+    Aeq(2,end)=1;
+    beq(1)=X0;
+    beq(2)=0;
+    x0 = zeros(N+1,1);
+    x0(1)=X0;
+    options = optimset('Algorithm','interior-point');
+    [x,fval,exitflag]=fmincon(obj,x0,[],[],Aeq,beq,[],[],nonlincon,options);
+    % Minimal expected shortfall
+    % constant trading over period
+    liquidation_strategies(:,i)=x;
+end
+hold on;
+plot(0:N,liquidation_strategies);
+title('Efficient Frontier');
+
+%% Plotting the 3D efficient surface
+surf(repmat((0:N)',1,numStrategies),repmat(targetedVarArray,N+1,1),liquidation_strategies)
+title('Liquidation strategy''s Efficient Frontier');
+xlabel('Trading periods','fontweight','b');
+ylabel('Volatility risk','fontweight','b');
+zlabel('Stock amount','fontweight','b');
+##### SOURCE END #####
+--></body></html>
